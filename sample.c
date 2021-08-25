@@ -1,4 +1,5 @@
 
+#define XJSON_H_IMPLEMENTATION
 #include "xjson.h"
 #include <stdio.h>
 
@@ -52,7 +53,7 @@ int main(int argc, char* argv[])
         xjson_setup_write(json, true, json_str, 2048);
     }
 
--    xjson_object_begin(json, NULL);
+    xjson_object_begin(json, NULL);
     {
         xjson_u32(json, "a", &obj.a);
         

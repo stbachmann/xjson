@@ -4,6 +4,8 @@
     
 
 */
+#ifndef XJSON_H
+#define XJSON_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -21,19 +23,31 @@
 
 #define XJSON_LOG(s) puts(s)
 
-// Public API
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct xjson xjson;
 
+/* Sets xjson to read-mode using the string pointed to by json_str up to length len */
 void xjson_setup_read(xjson* json, const char* json_str, size_t len);
+/* Sets xjson to write-mode and the json is written to buffer. If pretty_print is set to true, it'll produce a more readable output */
 void xjson_setup_write(xjson* json, bool pretty_print, char* buffer, size_t len);
+/* Sets a custom string allocator method. Expects that the returned char* is zero-terminated! */
 void xjson_set_string_allocator(xjson* json, char* (*string_allocator)(const char* str, size_t size));
 
+/* Begins a json object scope, all future value calls will use this object until a new scope is introduced */
 void xjson_object_begin(xjson* json, const char* key);
+/* Ends a json object scope */
 void xjson_object_end(xjson* json);
+/* Begins an array, all future value calls will use this array until a new scope is introduced */
 void xjson_array_begin(xjson* json, const char* key);
+/* Ends an array */
 void xjson_array_end(xjson* json);
-bool xjson_array_size(xjson* json, int size);
+/* Will return true if an array end has been reached. Use this to parse/write an array with loops */
+bool xjson_array_reached_end(xjson* json, int counter, int size);
 
+/* Read/write integer types */
 void xjson_u8(xjson* json, const char* key, uint8_t* val);
 void xjson_u16(xjson* json, const char* key, uint16_t* val);
 void xjson_u32(xjson* json, const char* key, uint32_t* val);
@@ -42,14 +56,17 @@ void xjson_i8(xjson* json, const char* key, int8_t* val);
 void xjson_i16(xjson* json, const char* key, int16_t* val);
 void xjson_i32(xjson* json, const char* key, int32_t* val);
 void xjson_i64(xjson* json, const char* key, int64_t* val);
+
+/* Read/write floating-point types */
 void xjson_float(xjson* json, const char* key, float* val);
 void xjson_double(xjson* json, const char* key, double* val);
+
+/* Read/write bool */
 void xjson_bool(xjson* json, const char* key, bool* val);
+
+/* Read/write a string */
 void xjson_string(xjson* json, const char* key, const char** str);
 
-//----------------------------------------------------------------------------------
-// API implementation
-//----------------------------------------------------------------------------------
 typedef enum xjson_state
 {
     XJSON_STATE_UNITIALIZED = 0,
@@ -71,8 +88,6 @@ typedef enum xjson_int_type
 
 typedef struct xjson
 {
-    uint32_t _start_canary;
-
     // Current state of this xjson object. Is XJSON_STATE_UNITIALIZED by default
     xjson_state mode;
     // Will output json with newline/tab.
@@ -84,15 +99,24 @@ typedef struct xjson
     uint8_t* end;
     uint8_t* start;
 
+    // The custom string allocator function
     char* (*string_allocator)(const char* str, size_t size);
 
     // Error handling. Set to true on error + appropriate message in error_message.
     bool error;
     char error_message[256];
-
-    uint32_t _end_canary;
 } xjson;
 
+#ifdef __cplusplus
+}
+#endif
+
+#endif // XJSON_H
+
+#ifdef XJSON_H_IMPLEMENTATION
+//----------------------------------------------------------------------------------
+// API implementation
+//----------------------------------------------------------------------------------
 void xjson_error(xjson* json, const char* message)
 {
     json->error = true;
@@ -769,3 +793,4 @@ void xjson_string(xjson* json, const char* key, const char** str)
         xjson_print_token(json, ",", 1);
     }
 }
+#endif // XJSON_H_IMPLEMENTATION
