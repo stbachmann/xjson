@@ -1,0 +1,7 @@
+#
+# xjson
+#
+---
+exports:
+  header-dirs: [ "." ]
+
