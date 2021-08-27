@@ -15,9 +15,6 @@
 #include <malloc.h>
 #include <inttypes.h> // for PRIi64 macros
 
-#define XJSON_MALLOC malloc
-#define XJSON_FREE free
-
 #include <assert.h>
 #define XJSON_ASSERT(c) assert(c)
 
@@ -136,8 +133,8 @@ void xjson_error(xjson* json, const char* message)
         }
 
         int character_offset = json->current-(json->start+line_begin);
-        char* sample_range_start = json->current - 8 < json->start ? json->start : json->current - 8;
-        char* sample_range_end = json->current + 8 > json->end ? json->end : json->current + 8;
+        uint8_t* sample_range_start = json->current - 8 < json->start ? json->start : json->current - 8;
+        uint8_t* sample_range_end = json->current + 8 > json->end ? json->end : json->current + 8;
         // print formatted line data
         sprintf(json->error_message, "Error (%i, %i): %s\n\t%.*s\n\t%.*s^", line, character_offset, message, sample_range_end-sample_range_start, sample_range_start, json->current-sample_range_start, "-------------");
     }
@@ -232,7 +229,7 @@ void xjson_expect_key(xjson* json, const char* key)
     if(json->error) return;
 
     // We find the size of the key and advance the current pointer to the end of key
-    const char* key_start = json->current;
+    const uint8_t* key_start = json->current;
     while(*json->current != '\"') {
         xjson_consume(json);
         if(json->error) return;
@@ -253,8 +250,8 @@ void xjson_expect_and_parse_int(xjson* json, int64_t* out_value)
 {
     if(json->error) return;
 
-    char* end_ptr;
-    int64_t value = strtoll(json->current, &end_ptr, 10);
+    uint8_t* end_ptr;
+    int64_t value = strtoll((char*)json->current, &(char*)end_ptr, 10);
     if(json->current == end_ptr)
     {
         // This means we couldn't parse the integer properly.
@@ -274,8 +271,8 @@ void xjson_expect_and_parse_double(xjson* json, double* out_value)
 {
     if(json->error) return;
 
-    char* end_ptr;
-    double value = strtod(json->current, &end_ptr);
+    uint8_t* end_ptr;
+    double value = strtod((char*)json->current, &(char*)end_ptr);
     if(json->current == end_ptr)
     {
         // This means we couldn't parse the integer properly.
@@ -296,7 +293,7 @@ void xjson_expect_and_parse_string(xjson* json, const char** str)
     xjson_expect(json, '\"');
     if(json->error) return;
 
-    char* str_start = json->current;
+    uint8_t* str_start = json->current;
 
     while(*json->current != '\"')
     {
@@ -305,7 +302,7 @@ void xjson_expect_and_parse_string(xjson* json, const char** str)
     }
 
     size_t str_len = json->current - str_start;
-    *str = json->string_allocator(str_start, str_len);
+    *str = json->string_allocator((char*)str_start, str_len);
     
     xjson_expect(json, '\"');
 }
@@ -341,7 +338,7 @@ void xjson_print_token(xjson* json, const char* token, size_t len)
        xjson_error(json, "Write buffer is too small to write to. Abort.");
     }
 
-    strncpy(json->current, token, len);
+    strncpy((char*)json->current, token, len);
     json->current += len;
 }
 
@@ -369,9 +366,9 @@ void xjson_setup_read(xjson* json, const char* str, size_t len)
     XJSON_ASSERT(json);
     XJSON_ASSERT(str);
 
-    json->start = str;
-    json->current = str;
-    json->end = str+len;
+    json->start = (uint8_t*)str;
+    json->current = (uint8_t*)str;
+    json->end = (uint8_t*)(str+len);
     json->mode = XJSON_STATE_READ;
 }
 
@@ -381,9 +378,9 @@ void xjson_setup_write(xjson* json, bool pretty_print, char* buffer, size_t len)
     XJSON_ASSERT(buffer);
 
     json->pretty_print = pretty_print;
-    json->start = buffer;
-    json->current = buffer;
-    json->end = buffer+len;
+    json->start = (uint8_t*)buffer;
+    json->current = (uint8_t*)buffer;
+    json->end = (uint8_t*)(buffer+len);
     json->mode = XJSON_STATE_WRITE;
 }
 
@@ -522,12 +519,8 @@ bool xjson_array_reached_end(xjson* json, int current, int size)
         
         return false;
     }
-    else 
-    {
-        return current >= size;
-    }
-
-    return true;
+    
+    return current >= size;
 }
 
 void xjson_integer(xjson* json, const char* key, void* val, xjson_int_type type)
@@ -593,28 +586,28 @@ void xjson_integer(xjson* json, const char* key, void* val, xjson_int_type type)
         switch (type)
         {
         case XJSON_INT_TYPE_U8:
-            len = sprintf(json->current, "%" PRIu8, *(uint8_t*)val);
+            len = sprintf((char*)json->current, "%" PRIu8, *(uint8_t*)val);
             break;
         case XJSON_INT_TYPE_U16:
-            len = sprintf(json->current, "%" PRIu16, *(uint16_t*)val);
+            len = sprintf((char*)json->current, "%" PRIu16, *(uint16_t*)val);
             break;
         case XJSON_INT_TYPE_U32:
-            len = sprintf(json->current, "%" PRIu32, *(uint32_t*)val);
+            len = sprintf((char*)json->current, "%" PRIu32, *(uint32_t*)val);
             break;
         case XJSON_INT_TYPE_U64:
-            len = sprintf(json->current, "%" PRIu64, *(uint64_t*)val);
+            len = sprintf((char*)json->current, "%" PRIu64, *(uint64_t*)val);
             break;
         case XJSON_INT_TYPE_I8:
-            len = sprintf(json->current, "%" PRIi8, *(int8_t*)val);
+            len = sprintf((char*)json->current, "%" PRIi8, *(int8_t*)val);
             break;
         case XJSON_INT_TYPE_I16:
-            len = sprintf(json->current, "%" PRIi16, *(int16_t*)val);
+            len = sprintf((char*)json->current, "%" PRIi16, *(int16_t*)val);
             break;
         case XJSON_INT_TYPE_I32:
-            len = sprintf(json->current, "%" PRIi32, *(int32_t*)val);
+            len = sprintf((char*)json->current, "%" PRIi32, *(int32_t*)val);
             break;
         case XJSON_INT_TYPE_I64:
-            len = sprintf(json->current, "%" PRIi64, *(int64_t*)val);
+            len = sprintf((char*)json->current, "%" PRIi64, *(int64_t*)val);
             break;
         default:
             // TODO: error
@@ -694,7 +687,7 @@ void xjson_float(xjson* json, const char* key, float* val)
             xjson_print_key(json, key);
         }
 
-        int len = sprintf(json->current, "%f", *val);
+        int len = sprintf((char*)json->current, "%f", *val);
         json->current += len;
 
         xjson_print_token(json, ",", 1);
@@ -725,7 +718,7 @@ void xjson_double(xjson* json, const char* key, double* val)
             xjson_print_key(json, key);
         }
 
-        int len = sprintf(json->current, "%f", *val);
+        int len = sprintf((char*)json->current, "%f", *val);
         json->current += len;
 
         xjson_print_token(json, ",", 1);
@@ -756,7 +749,7 @@ void xjson_bool(xjson* json, const char* key, bool* val)
             xjson_print_key(json, key);
         }
 
-        int len = sprintf(json->current, "%s", *val == true ? "true" : "false");
+        int len = sprintf((char*)json->current, "%s", *val == true ? "true" : "false");
         json->current += len;
 
         xjson_print_token(json, ",", 1);
@@ -787,7 +780,7 @@ void xjson_string(xjson* json, const char* key, const char** str)
             xjson_print_key(json, key);
         }
 
-        int len = sprintf(json->current, "\"%s\"", *str);
+        int len = sprintf((char*)json->current, "\"%s\"", *str);
         json->current += len;
         
         xjson_print_token(json, ",", 1);
