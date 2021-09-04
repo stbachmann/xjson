@@ -25,7 +25,7 @@ char* allocate_string(const char* str, size_t str_len, void* mem_ctx)
     return new_str;
 }
 
-const char* json_sample = "{ \"a\": 20, \"b\": [2.0, 1.0, 3.0], \"c\": \"A test string!\", \"d\": false, \"pos\" { \"x\": 4, \"y\": 10.5 }, \"delta\": { \"x\": 20.3331, \"y\": 8 }}";
+const char* json_sample = "{ \"a\": 20, \"b\": [2.0, 1.0, 3.0], \"c\": \"A test string!\", \"d\": false, \"pos\": { \"x\": 4, \"y\": 10.5 }, \"delta\": { \"x\": 20.3331, \"y\": 8 }}";
 
 int main(int argc, char* argv[])
 {
@@ -78,8 +78,16 @@ int main(int argc, char* argv[])
 
         xjson_object_begin(json, "delta");
         {
-            xjson_float(json, "x", &obj.delta.x);
-            xjson_float(json, "y", &obj.delta.y);
+            char* key_x = "x";
+            char* key_y = "y";
+
+            // This is doing it the hard way, by reading key first
+            // Can be helpful working with hash maps for example
+            xjson_key(json, &key_x);
+            xjson_float(json, NULL, &obj.delta.x);
+
+            xjson_key(json, &key_y);
+            xjson_float(json, NULL, &obj.delta.y);
         }
         xjson_object_end(json);
     }

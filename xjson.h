@@ -43,6 +43,8 @@ void xjson_array_begin(xjson* json, const char* key);
 void xjson_array_end(xjson* json);
 /* Will return true if an array end has been reached. Use this to parse/write an array with loops */
 bool xjson_array_reached_end(xjson* json, int counter, int size);
+/* Reads/Writes just the key, it means next value call should not supply a key (nullptr). Useful for hashmaps */
+void xjson_key(xjson* json, const char** key);
 
 /* Read/write integer types */
 void xjson_u8(xjson* json, const char* key, uint8_t* val);
@@ -523,6 +525,22 @@ bool xjson_array_reached_end(xjson* json, int current, int size)
     }
     
     return current >= size;
+}
+
+void xjson_key(xjson* json, const char** key)
+{
+    XJSON_ASSERT(json);
+    XJSON_ASSERT(json->mode != XJSON_STATE_UNITIALIZED);
+
+    if(json->mode == XJSON_STATE_READ)
+    {
+        xjson_expect_and_parse_string(json, key);
+        xjson_expect(json, ':');
+    }
+    else
+    {
+        xjson_print_key(json, *key);
+    }
 }
 
 void xjson_integer(xjson* json, const char* key, void* val, xjson_int_type type)
