@@ -17,7 +17,7 @@ typedef struct simple_struct {
     vec2 delta;
 } simple_struct;
 
-char* allocate_string(const char* str, size_t str_len)
+char* allocate_string(const char* str, size_t str_len, void* mem_ctx)
 {
     char* new_str = malloc(str_len + 1); // zero-terminate!
     memcpy(new_str, str, str_len);

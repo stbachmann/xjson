@@ -31,7 +31,7 @@ void xjson_setup_read(xjson* json, const char* json_str, size_t len);
 /* Sets xjson to write-mode and the json is written to buffer. If pretty_print is set to true, it'll produce a more readable output */
 void xjson_setup_write(xjson* json, bool pretty_print, char* buffer, size_t len);
 /* Sets a custom string allocator method. Expects that the returned char* is zero-terminated! */
-void xjson_set_string_allocator(xjson* json, char* (*string_allocator)(const char* str, size_t size));
+void xjson_set_string_allocator(xjson* json, char* (*string_allocator)(const char* str, size_t size, void* mem_ctx));
 
 /* Begins a json object scope, all future value calls will use this object until a new scope is introduced */
 void xjson_object_begin(xjson* json, const char* key);
@@ -85,6 +85,8 @@ typedef enum xjson_int_type
 
 typedef struct xjson
 {
+    // Will be passed to the string allocator function
+    void* mem_ctx;
     // Current state of this xjson object. Is XJSON_STATE_UNITIALIZED by default
     xjson_state mode;
     // Will output json with newline/tab.
@@ -97,7 +99,7 @@ typedef struct xjson
     uint8_t* start;
 
     // The custom string allocator function
-    char* (*string_allocator)(const char* str, size_t size);
+    char* (*string_allocator)(const char* str, size_t size, void* mem_ctx);
 
     // Error handling. Set to true on error + appropriate message in error_message.
     bool error;
@@ -302,7 +304,7 @@ void xjson_expect_and_parse_string(xjson* json, const char** str)
     }
 
     size_t str_len = json->current - str_start;
-    *str = json->string_allocator((char*)str_start, str_len);
+    *str = json->string_allocator((char*)str_start, str_len, json->mem_ctx);
     
     xjson_expect(json, '\"');
 }
@@ -384,7 +386,7 @@ void xjson_setup_write(xjson* json, bool pretty_print, char* buffer, size_t len)
     json->mode = XJSON_STATE_WRITE;
 }
 
-void xjson_set_string_allocator(xjson* json, char* (*string_allocator)(const char* str, size_t size))
+void xjson_set_string_allocator(xjson* json, char* (*string_allocator)(const char* str, size_t size, void* mem_ctx))
 {
     XJSON_ASSERT(json);
     XJSON_ASSERT(string_allocator);
