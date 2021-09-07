@@ -158,6 +158,20 @@ bool xjson_is_space(char c)
 		(c == '\r');
 }
 
+char xjson_lookback(xjson* json)
+{
+    if(json->error) return 0;
+    if(json->current == json->start) return 0;
+
+    uint8_t* ptr = json->current - 1;
+    while(ptr > json->start && xjson_is_space(*ptr))
+    {
+        ptr--;
+    }
+
+    return ptr > json->start ? *ptr : 0;
+}
+
 char xjson_consume(xjson* json)
 {
     if(json->error) return 0;
@@ -175,19 +189,6 @@ char xjson_consume(xjson* json)
     }
 
     return c;
-}
-
-char xjson_peek(xjson* json)
-{
-    if(json->error) return 0;
-
-    uint8_t* ptr = json->current + 1;
-    while(ptr < json->end && xjson_is_space(*ptr))
-    {
-        ptr++;
-    }
-
-    return ptr < json->end ? *ptr : 0;
 }
 
 void xjson_try(xjson* json, char expected_character)
@@ -415,6 +416,10 @@ void xjson_object_begin(xjson* json, const char* key)
             if(json->pretty_print) xjson_print_new_line(json);
             xjson_print_key(json, key);
         }
+        else if(json->pretty_print && xjson_lookback(json) != ':' && json->intendation != 0)
+        {
+            xjson_print_new_line(json);
+        }
 
         xjson_print_token(json, "{", 1);
     }
@@ -478,6 +483,10 @@ void xjson_array_begin(xjson* json, const char* key)
             if(json->pretty_print) xjson_print_new_line(json);
             xjson_print_key(json, key);
         }
+        else if(json->pretty_print && xjson_lookback(json) != ':')
+        {
+            xjson_print_new_line(json);
+        }
 
         xjson_print_token(json, "[", 1);
     }
@@ -539,6 +548,7 @@ void xjson_key(xjson* json, const char** key)
     }
     else
     {
+        if(json->pretty_print) xjson_print_new_line(json);
         xjson_print_key(json, *key);
     }
 }
@@ -595,11 +605,14 @@ void xjson_integer(xjson* json, const char* key, void* val, xjson_int_type type)
     }
     else
     {
-        if(json->pretty_print) xjson_print_new_line(json);
-
         if(key != NULL)
         {
+            if(json->pretty_print) xjson_print_new_line(json);
             xjson_print_key(json, key);
+        }
+        else if(json->pretty_print && xjson_lookback(json) != ':')
+        {
+            xjson_print_new_line(json);
         }
 
         int len = 0;
@@ -700,11 +713,14 @@ void xjson_float(xjson* json, const char* key, float* val)
     }
     else
     {
-        if(json->pretty_print) xjson_print_new_line(json);
-
         if(key != NULL)
         {
+            if(json->pretty_print) xjson_print_new_line(json);
             xjson_print_key(json, key);
+        }
+        else if(json->pretty_print && xjson_lookback(json) != ':')
+        {
+            xjson_print_new_line(json);
         }
 
         int len = sprintf((char*)json->current, "%f", *val);
@@ -731,11 +747,14 @@ void xjson_double(xjson* json, const char* key, double* val)
     }
     else
     {
-        if(json->pretty_print) xjson_print_new_line(json);
-
         if(key != NULL)
         {
+            if(json->pretty_print) xjson_print_new_line(json);
             xjson_print_key(json, key);
+        }
+        else if(json->pretty_print && xjson_lookback(json) != ':')
+        {
+            xjson_print_new_line(json);
         }
 
         int len = sprintf((char*)json->current, "%f", *val);
@@ -762,11 +781,14 @@ void xjson_bool(xjson* json, const char* key, bool* val)
     }
     else
     {
-        if(json->pretty_print) xjson_print_new_line(json);
-
         if(key != NULL)
         {
+            if(json->pretty_print) xjson_print_new_line(json);
             xjson_print_key(json, key);
+        }
+        else if(json->pretty_print && xjson_lookback(json) != ':')
+        {
+            xjson_print_new_line(json);
         }
 
         int len = sprintf((char*)json->current, "%s", *val == true ? "true" : "false");
@@ -793,11 +815,14 @@ void xjson_string(xjson* json, const char* key, const char** str)
     }
     else
     {
-        if(json->pretty_print) xjson_print_new_line(json);
-
         if(key != NULL)
         {
+            if(json->pretty_print) xjson_print_new_line(json);
             xjson_print_key(json, key);
+        }
+        else if(json->pretty_print && xjson_lookback(json) != ':')
+        {
+            xjson_print_new_line(json);
         }
 
         int len = sprintf((char*)json->current, "\"%s\"", *str);

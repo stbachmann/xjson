@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
         .pos = { .x=1.0, .y=2.0 },
         .delta = { .x=10, .y=10 }
     };
-    bool read = true;
+    bool read = false;
     char json_str[2048];
     xjson* json = malloc(sizeof(xjson));
     memset(json, 0, sizeof(xjson));
