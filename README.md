@@ -53,8 +53,9 @@ If no string allocator is supplied, xjson will use malloc to allocate strings an
 A simple custom allocator using malloc could look like this:
 ```C
 // xjson expects the returned string to be zero-terminated as the supplied strings are not zero-terminated
-char* allocate_string(const char* str, size_t str_len)
+char* allocate_string(const char* str, size_t str_len, void* mem_ctx)
 {
+    // mem_ctx is a pointer to some user-defined data. Can be used to pass allocators etc. into the string allocation function
     char* new_str = malloc(str_len + 1); // zero-terminate!
     memcpy(new_str, str, str_len);
     new_str[str_len] = '\0';
@@ -130,7 +131,7 @@ int main(int argc, char* argv[])
     // Process any errors
     if(json->error)
     {
-        // Print error or some other means
+        // Print error or handle in some other way
     }
 }
 ```
