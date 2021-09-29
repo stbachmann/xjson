@@ -25,6 +25,12 @@ extern "C" {
 #endif
 
 typedef struct xjson xjson;
+typedef enum xjson_state
+{
+    XJSON_STATE_UNITIALIZED = 0,
+    XJSON_STATE_READ,
+    XJSON_STATE_WRITE
+} xjson_state;
 
 /* Sets xjson to read-mode using the string pointed to by json_str up to length len */
 void xjson_setup_read(xjson* json, const char* json_str, size_t len);
@@ -32,6 +38,9 @@ void xjson_setup_read(xjson* json, const char* json_str, size_t len);
 void xjson_setup_write(xjson* json, bool pretty_print, char* buffer, size_t len);
 /* Sets a custom string allocator method. Expects that the returned char* is zero-terminated! */
 void xjson_set_string_allocator(xjson* json, char* (*string_allocator)(const char* str, size_t size, void* mem_ctx));
+
+/* Returns either XJSON_STATE_READ or XJSON_STATE_WRITE */
+xjson_state xjson_get_state(xjson* json);
 
 /* Begins a json object scope, all future value calls will use this object until a new scope is introduced */
 void xjson_object_begin(xjson* json, const char* key);
@@ -65,13 +74,6 @@ void xjson_bool(xjson* json, const char* key, bool* val);
 
 /* Read/write a string */
 void xjson_string(xjson* json, const char* key, const char** str);
-
-typedef enum xjson_state
-{
-    XJSON_STATE_UNITIALIZED = 0,
-    XJSON_STATE_READ,
-    XJSON_STATE_WRITE
-} xjson_state;
 
 typedef enum xjson_int_type
 {
@@ -256,7 +258,7 @@ void xjson_expect_and_parse_int(xjson* json, int64_t* out_value)
     if(json->error) return;
 
     uint8_t* end_ptr;
-    int64_t value = strtoll((char*)json->current, &(char*)end_ptr, 10);
+    int64_t value = strtoll((char*)json->current, (char**)&end_ptr, 10);
     if(json->current == end_ptr)
     {
         // This means we couldn't parse the integer properly.
@@ -277,7 +279,7 @@ void xjson_expect_and_parse_double(xjson* json, double* out_value)
     if(json->error) return;
 
     uint8_t* end_ptr;
-    double value = strtod((char*)json->current, &(char*)end_ptr);
+    double value = strtod((char*)json->current, (char**)&end_ptr);
     if(json->current == end_ptr)
     {
         // This means we couldn't parse the integer properly.
@@ -395,6 +397,13 @@ void xjson_set_string_allocator(xjson* json, char* (*string_allocator)(const cha
     XJSON_ASSERT(string_allocator);
 
     json->string_allocator = string_allocator;
+}
+
+xjson_state xjson_get_state(xjson* json)
+{
+    XJSON_ASSERT(json);
+
+    return json->mode;
 }
 
 void xjson_object_begin(xjson* json, const char* key)
