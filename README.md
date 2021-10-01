@@ -93,9 +93,10 @@ else
 
 ## A Full Example
 
-Here's a basic example showcasing how to read/write json using xjson.
+Here's a basic example showcasing how to read/write json using xjson. You may also look at the supplied `sample.c` file.
 
 ```C
+#define XJSON_H_IMPLEMENTATION
 #include "xjson.h"
 
 typedef struct simple_struct {
