@@ -76,6 +76,21 @@ if(json->error)
 }
 ```
 
+## Special case read/write handling
+
+As much as possible xjson allows the same processing for read as well as write. But there may sometimes still be situations that need separate paths. For that purpose you may query the current mode by calling `xjson_get_state(xjson* json)`.
+
+```C
+if(xjson_get_state(json) == XJSON_STATE_READ)
+{
+    // Process for read
+}
+else 
+{
+    // Process for write
+}
+```
+
 ## A Full Example
 
 Here's a basic example showcasing how to read/write json using xjson.
