@@ -1,6 +1,6 @@
 # xjson
 
-A small header-only json library for C. The key unique feature is that it allows use of the same code to serialize as well as deserialize, greatly reducing boiler-plate code required. The library also does not make any allocations (strings however need some special treatment, see below).
+A small header-only json library for C. The "unique" feature is that it allows use of the same code to serialize as well as deserialize, greatly reducing boiler-plate code required. The library also does not make any allocations (strings however need some special treatment, see below). Total line count is ~800 loc so it's easy to read through and pick up.
 
 The library API was inspired by the kv implementation found in the cute framework (https://github.com/RandyGaul/cute_framework).
 
