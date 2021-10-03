@@ -181,13 +181,13 @@ void xjson_error(xjson* json, const char* message)
     }
 }
 
-bool xjson_is_space(char c)
+bool xjson_is_white_space(char c)
 {
-    return (c == ' ') |
-		(c == '\t') |
-		(c == '\n') |
-		(c == '\v') |
-		(c == '\f') |
+    return (c == ' ') ||
+		(c == '\t') ||
+		(c == '\n') ||
+		(c == '\v') ||
+		(c == '\f') ||
 		(c == '\r');
 }
 
@@ -197,7 +197,7 @@ char xjson_lookback(xjson* json)
     if(json->current == json->start) return 0;
 
     uint8_t* ptr = json->current - 1;
-    while(ptr > json->start && xjson_is_space(*ptr))
+    while(ptr > json->start && xjson_is_white_space(*ptr))
     {
         ptr--;
     }
@@ -214,7 +214,7 @@ char xjson_consume(xjson* json)
 
     // Consume any white space that might be there
     char c = *(++json->current);
-    while(xjson_is_space(c))
+    while(xjson_is_white_space(c))
     {
         if(json->current == json->end)
             return 0;
@@ -256,7 +256,7 @@ void xjson_expect_token(xjson* json, const char* token, size_t len)
     }
 
     json->current += len;
-    if(xjson_is_space(*json->current)){
+    if(xjson_is_white_space(*json->current)){
         xjson_consume(json);
     }
 }
@@ -300,7 +300,7 @@ void xjson_expect_and_parse_int(xjson* json, int64_t* out_value)
 
     // Move pointer to end of number value + ensure all white space is consumed
     json->current = end_ptr;
-    if(xjson_is_space(*json->current)){
+    if(xjson_is_white_space(*json->current)){
         xjson_consume(json);
     }
 }
@@ -321,7 +321,7 @@ void xjson_expect_and_parse_double(xjson* json, double* out_value)
 
     // Move pointer to end of number value
     json->current = end_ptr;
-    if(xjson_is_space(*json->current)){
+    if(xjson_is_white_space(*json->current)){
         xjson_consume(json);
     }
 }
